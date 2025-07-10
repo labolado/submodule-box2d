@@ -1323,13 +1323,14 @@ void b2World::DrawDebugData()
 		b2Color color(0.3f, 0.9f, 0.9f);
 		for (b2Contact* c = m_contactManager.m_contactList; c; c = c->GetNext())
 		{
-			//b2Fixture* fixtureA = c->GetFixtureA();
-			//b2Fixture* fixtureB = c->GetFixtureB();
+			b2Fixture* fixtureA = c->GetFixtureA();
+			b2Fixture* fixtureB = c->GetFixtureB();
+			int32 indexA = c->GetChildIndexA();
+			int32 indexB = c->GetChildIndexB();
+			b2Vec2 cA = fixtureA->GetAABB(indexA).GetCenter();
+			b2Vec2 cB = fixtureB->GetAABB(indexB).GetCenter();
 
-			//b2Vec2 cA = fixtureA->GetAABB().GetCenter();
-			//b2Vec2 cB = fixtureB->GetAABB().GetCenter();
-
-			//m_debugDraw->DrawSegment(cA, cB, color);
+			m_debugDraw->DrawSegment(cA, cB, color);
 		}
 	}
 
