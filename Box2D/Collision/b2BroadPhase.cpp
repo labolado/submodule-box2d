@@ -37,9 +37,9 @@ b2BroadPhase::~b2BroadPhase()
 	b2Free(m_pairBuffer);
 }
 
-int32 b2BroadPhase::CreateProxy(const b2AABB& aabb, void* userData)
+int32 b2BroadPhase::CreateProxy(const b2AABB& aabb, void* userData, uint16 categoryBits)
 {
-	int32 proxyId = m_tree.CreateProxy(aabb, userData);
+	int32 proxyId = m_tree.CreateProxy(aabb, userData, categoryBits);
 	++m_proxyCount;
 	BufferMove(proxyId);
 	return proxyId;

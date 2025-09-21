@@ -23,7 +23,6 @@
 #include <Box2D/Common/b2GrowableStack.h>
 
 #define b2_nullNode (-1)
-
 /// A node in the dynamic tree. The client does not interact with this directly.
 struct b2TreeNode
 {
@@ -36,6 +35,9 @@ struct b2TreeNode
 	b2AABB aabb;
 
 	void* userData;
+
+	// Category bits for collision filtering
+	uint16 categoryBits;
 
 	union
 	{
@@ -70,7 +72,7 @@ public:
 	~b2DynamicTree();
 
 	/// Create a proxy. Provide a tight fitting AABB and a userData pointer.
-	int32 CreateProxy(const b2AABB& aabb, void* userData);
+	int32 CreateProxy(const b2AABB& aabb, void* userData, uint16 categoryBits);
 
 	/// Destroy a proxy. This asserts if the id is invalid.
 	void DestroyProxy(int32 proxyId);
@@ -104,7 +106,7 @@ public:
 	/// @param input the ray-cast input data. The ray extends from p1 to p1 + maxFraction * (p2 - p1).
 	/// @param callback a callback class that is called for each proxy that is hit by the ray.
 	template <typename T>
-	void RayCast(T* callback, const b2RayCastInput& input) const;
+	void RayCast(T* callback, const b2RayCastInput& input, uint16 maskBits) const;
 
 	/// Validate this tree. For testing.
 	void Validate() const;
@@ -119,6 +121,8 @@ public:
 
 	/// Get the ratio of the sum of the node areas to the root area.
 	float32 GetAreaRatio() const;
+
+	void SetCategoryBits(uint16 categoryBits);
 
 	/// Build an optimal tree. Very expensive. For testing.
 	void RebuildBottomUp();
@@ -218,7 +222,7 @@ inline void b2DynamicTree::Query(T* callback, const b2AABB& aabb) const
 }
 
 template <typename T>
-inline void b2DynamicTree::RayCast(T* callback, const b2RayCastInput& input) const
+inline void b2DynamicTree::RayCast(T* callback, const b2RayCastInput& input, uint16 maskBits) const
 {
 	b2Vec2 p1 = input.p1;
 	b2Vec2 p2 = input.p2;
@@ -256,7 +260,7 @@ inline void b2DynamicTree::RayCast(T* callback, const b2RayCastInput& input) con
 
 		const b2TreeNode* node = m_nodes + nodeId;
 
-		if (b2TestOverlap(node->aabb, segmentAABB) == false)
+		if ((node->categoryBits & maskBits) == 0 || (b2TestOverlap(node->aabb, segmentAABB) == false))
 		{
 			continue;
 		}

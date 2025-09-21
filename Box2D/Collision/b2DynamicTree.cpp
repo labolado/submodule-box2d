@@ -85,6 +85,7 @@ int32 b2DynamicTree::AllocateNode()
 	m_nodes[nodeId].child1 = b2_nullNode;
 	m_nodes[nodeId].child2 = b2_nullNode;
 	m_nodes[nodeId].height = 0;
+	m_nodes[nodeId].categoryBits = _I16_MAX;
 	m_nodes[nodeId].userData = NULL;
 	m_nodes[nodeId].moved = false;
 	++m_nodeCount;
@@ -105,7 +106,7 @@ void b2DynamicTree::FreeNode(int32 nodeId)
 // Create a proxy in the tree as a leaf node. We return the index
 // of the node instead of a pointer so that we can grow
 // the node pool.
-int32 b2DynamicTree::CreateProxy(const b2AABB& aabb, void* userData)
+int32 b2DynamicTree::CreateProxy(const b2AABB& aabb, void* userData, uint16 categoryBits)
 {
 	int32 proxyId = AllocateNode();
 
@@ -115,8 +116,8 @@ int32 b2DynamicTree::CreateProxy(const b2AABB& aabb, void* userData)
 	m_nodes[proxyId].aabb.upperBound = aabb.upperBound + r;
 	m_nodes[proxyId].userData = userData;
 	m_nodes[proxyId].height = 0;
+	m_nodes[proxyId].categoryBits = categoryBits;
 	m_nodes[proxyId].moved = true;
-
 	InsertLeaf(proxyId);
 
 	return proxyId;
@@ -286,6 +287,7 @@ void b2DynamicTree::InsertLeaf(int32 leaf)
 	m_nodes[newParent].userData = NULL;
 	m_nodes[newParent].aabb.Combine(leafAABB, m_nodes[sibling].aabb);
 	m_nodes[newParent].height = m_nodes[sibling].height + 1;
+	m_nodes[newParent].categoryBits = m_nodes[leaf].categoryBits | m_nodes[sibling].categoryBits;
 
 	if (oldParent != b2_nullNode)
 	{
@@ -328,7 +330,7 @@ void b2DynamicTree::InsertLeaf(int32 leaf)
 
 		m_nodes[index].height = 1 + b2Max(m_nodes[child1].height, m_nodes[child2].height);
 		m_nodes[index].aabb.Combine(m_nodes[child1].aabb, m_nodes[child2].aabb);
-
+		m_nodes[newParent].categoryBits = m_nodes[child1].categoryBits | m_nodes[child2].categoryBits;
 		index = m_nodes[index].parent;
 	}
 
@@ -380,7 +382,7 @@ void b2DynamicTree::RemoveLeaf(int32 leaf)
 
 			m_nodes[index].aabb.Combine(m_nodes[child1].aabb, m_nodes[child2].aabb);
 			m_nodes[index].height = 1 + b2Max(m_nodes[child1].height, m_nodes[child2].height);
-
+			m_nodes[index].categoryBits = m_nodes[child1].categoryBits | m_nodes[child2].categoryBits;
 			index = m_nodes[index].parent;
 		}
 	}
@@ -460,6 +462,8 @@ int32 b2DynamicTree::Balance(int32 iA)
 
 			A->height = 1 + b2Max(B->height, G->height);
 			C->height = 1 + b2Max(A->height, F->height);
+			A->categoryBits = B->categoryBits | G->categoryBits;
+			C->categoryBits = A->categoryBits | F->categoryBits;
 		}
 		else
 		{
@@ -471,6 +475,9 @@ int32 b2DynamicTree::Balance(int32 iA)
 
 			A->height = 1 + b2Max(B->height, F->height);
 			C->height = 1 + b2Max(A->height, G->height);
+
+			A->categoryBits = B->categoryBits | F->categoryBits;
+			C->categoryBits = A->categoryBits | G->categoryBits;
 		}
 
 		return iC;
@@ -520,6 +527,9 @@ int32 b2DynamicTree::Balance(int32 iA)
 
 			A->height = 1 + b2Max(C->height, E->height);
 			B->height = 1 + b2Max(A->height, D->height);
+
+			A->categoryBits = C->categoryBits | E->categoryBits;
+			B->categoryBits = A->categoryBits | D->categoryBits;
 		}
 		else
 		{
@@ -531,6 +541,9 @@ int32 b2DynamicTree::Balance(int32 iA)
 
 			A->height = 1 + b2Max(C->height, D->height);
 			B->height = 1 + b2Max(A->height, E->height);
+
+			A->categoryBits = C->categoryBits | D->categoryBits;
+			B->categoryBits = A->categoryBits | E->categoryBits;
 		}
 
 		return iB;
@@ -574,6 +587,10 @@ float32 b2DynamicTree::GetAreaRatio() const
 	}
 
 	return totalArea / rootArea;
+}
+
+void b2DynamicTree::SetCategoryBits(uint16 categoryBits)
+{
 }
 
 // Compute the height of a sub-tree.
@@ -671,6 +688,9 @@ void b2DynamicTree::ValidateMetrics(int32 index) const
 
 	b2Assert(aabb.lowerBound == node->aabb.lowerBound);
 	b2Assert(aabb.upperBound == node->aabb.upperBound);
+
+	uint16 categoryBits = m_nodes[child1].categoryBits | m_nodes[child2].categoryBits;
+	b2Assert(node->categoryBits == categoryBits);
 
 	ValidateMetrics(child1);
 	ValidateMetrics(child2);
@@ -777,6 +797,7 @@ void b2DynamicTree::RebuildBottomUp()
 		parent->child2 = index2;
 		parent->height = 1 + b2Max(child1->height, child2->height);
 		parent->aabb.Combine(child1->aabb, child2->aabb);
+		parent->categoryBits = child1->categoryBits | child2->categoryBits;
 		parent->parent = b2_nullNode;
 
 		child1->parent = parentIndex;

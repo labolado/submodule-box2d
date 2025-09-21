@@ -130,7 +130,7 @@ void b2Fixture::CreateProxies(b2BroadPhase* broadPhase, const b2Transform& xf)
 	{
 		b2FixtureProxy* proxy = m_proxies + i;
 		m_shape->ComputeAABB(&proxy->aabb, xf, i);
-		proxy->proxyId = broadPhase->CreateProxy(proxy->aabb, proxy);
+		proxy->proxyId = broadPhase->CreateProxy(proxy->aabb, proxy, m_filter.categoryBits);
 		proxy->fixture = this;
 		proxy->childIndex = i;
 	}

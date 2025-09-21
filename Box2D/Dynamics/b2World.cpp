@@ -1119,7 +1119,7 @@ struct b2WorldRayCastWrapper
 	b2RayCastCallback* callback;
 };
 
-void b2World::RayCast(b2RayCastCallback* callback, const b2Vec2& point1, const b2Vec2& point2) const
+void b2World::RayCast(b2RayCastCallback* callback, const b2Vec2& point1, const b2Vec2& point2, uint16 maskBits) const
 {
 	b2WorldRayCastWrapper wrapper;
 	wrapper.broadPhase = &m_contactManager.m_broadPhase;
@@ -1128,7 +1128,7 @@ void b2World::RayCast(b2RayCastCallback* callback, const b2Vec2& point1, const b
 	input.maxFraction = 1.0f;
 	input.p1 = point1;
 	input.p2 = point2;
-	m_contactManager.m_broadPhase.RayCast(&wrapper, input);
+	m_contactManager.m_broadPhase.RayCast(&wrapper, input, maskBits);
 	for (b2ParticleSystem* p = m_particleSystemList; p; p = p->GetNext())
 	{
 		if (callback->ShouldQueryParticleSystem(p))

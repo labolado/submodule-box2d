@@ -46,7 +46,7 @@ public:
 
 	/// Create a proxy with an initial AABB. Pairs are not reported until
 	/// UpdatePairs is called.
-	int32 CreateProxy(const b2AABB& aabb, void* userData);
+	int32 CreateProxy(const b2AABB& aabb, void* userData, uint16 categoryBits);
 
 	/// Destroy a proxy. It is up to the client to remove any pairs.
 	void DestroyProxy(int32 proxyId);
@@ -87,7 +87,7 @@ public:
 	/// @param input the ray-cast input data. The ray extends from p1 to p1 + maxFraction * (p2 - p1).
 	/// @param callback a callback class that is called for each proxy that is hit by the ray.
 	template <typename T>
-	void RayCast(T* callback, const b2RayCastInput& input) const;
+	void RayCast(T* callback, const b2RayCastInput& input, uint16 maskBits) const;
 
 	/// Get the height of the embedded tree.
 	int32 GetTreeHeight() const;
@@ -220,9 +220,9 @@ inline void b2BroadPhase::Query(T* callback, const b2AABB& aabb) const
 }
 
 template <typename T>
-inline void b2BroadPhase::RayCast(T* callback, const b2RayCastInput& input) const
+inline void b2BroadPhase::RayCast(T* callback, const b2RayCastInput& input, uint16 maskBits) const
 {
-	m_tree.RayCast(callback, input);
+	m_tree.RayCast(callback, input, maskBits);
 }
 
 inline void b2BroadPhase::ShiftOrigin(const b2Vec2& newOrigin)
