@@ -85,7 +85,7 @@ int32 b2DynamicTree::AllocateNode()
 	m_nodes[nodeId].child1 = b2_nullNode;
 	m_nodes[nodeId].child2 = b2_nullNode;
 	m_nodes[nodeId].height = 0;
-	m_nodes[nodeId].categoryBits = _I16_MAX;
+	m_nodes[nodeId].categoryBits = -1;
 	m_nodes[nodeId].userData = NULL;
 	m_nodes[nodeId].moved = false;
 	++m_nodeCount;
@@ -98,7 +98,7 @@ void b2DynamicTree::FreeNode(int32 nodeId)
 	b2Assert(0 <= nodeId && nodeId < m_nodeCapacity);
 	b2Assert(0 < m_nodeCount);
 	m_nodes[nodeId].next = m_freeList;
-	m_nodes[nodeId].height = -1;
+	m_nodes[nodeId].height = (uint16)-1;
 	m_freeList = nodeId;
 	--m_nodeCount;
 }
