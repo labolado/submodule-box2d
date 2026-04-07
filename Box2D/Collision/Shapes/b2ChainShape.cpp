@@ -22,6 +22,7 @@
 #include <new>
 #include <memory.h>
 #include <string.h>
+#include <stdio.h>
 
 b2ChainShape::~b2ChainShape()
 {
@@ -34,20 +35,30 @@ void b2ChainShape::CreateLoop(const b2Vec2* vertices, int32 count)
 {
 	b2Assert(m_vertices == NULL && m_count == 0);
 	b2Assert(count >= 3);
+
+	// Filter out degenerate vertices (too close together) instead of asserting.
+	b2Vec2* filtered = (b2Vec2*)b2Alloc(count * sizeof(b2Vec2));
+	int32 filteredCount = 0;
+	filtered[filteredCount++] = vertices[0];
 	for (int32 i = 1; i < count; ++i)
 	{
-#if B2_ASSERT_ENABLED
-		b2Vec2 v1 = vertices[i-1];
-		b2Vec2 v2 = vertices[i];
-		// If the code crashes here, it means your vertices are too close together.
-		b2Assert(b2DistanceSquared(v1, v2) > b2_linearSlop * b2_linearSlop);
-#endif // B2_ASSERT_ENABLED
+		if (b2DistanceSquared(vertices[i], filtered[filteredCount - 1]) > b2_linearSlop * b2_linearSlop)
+		{
+			filtered[filteredCount++] = vertices[i];
+		}
 	}
 
-	m_count = count + 1;
+	if (filteredCount < 3)
+	{
+		b2Free(filtered);
+		return;
+	}
+
+	m_count = filteredCount + 1;
 	m_vertices = (b2Vec2*)b2Alloc(m_count * sizeof(b2Vec2));
-	memcpy(m_vertices, vertices, count * sizeof(b2Vec2));
-	m_vertices[count] = m_vertices[0];
+	memcpy(m_vertices, filtered, filteredCount * sizeof(b2Vec2));
+	b2Free(filtered);
+	m_vertices[filteredCount] = m_vertices[0];
 	m_prevVertex = m_vertices[m_count - 2];
 	m_nextVertex = m_vertices[1];
 	m_hasPrevVertex = true;
@@ -58,19 +69,28 @@ void b2ChainShape::CreateChain(const b2Vec2* vertices, int32 count)
 {
 	b2Assert(m_vertices == NULL && m_count == 0);
 	b2Assert(count >= 2);
+
+	// Filter out degenerate vertices (too close together) instead of asserting.
+	// This prevents Debug-mode crashes with real-world data that has near-duplicate points.
+	b2Vec2* filtered = (b2Vec2*)b2Alloc(count * sizeof(b2Vec2));
+	int32 filteredCount = 0;
+	filtered[filteredCount++] = vertices[0];
 	for (int32 i = 1; i < count; ++i)
 	{
-#if B2_ASSERT_ENABLED
-		b2Vec2 v1 = vertices[i-1];
-		b2Vec2 v2 = vertices[i];
-		// If the code crashes here, it means your vertices are too close together.
-		b2Assert(b2DistanceSquared(v1, v2) > b2_linearSlop * b2_linearSlop);
-#endif // B2_ASSERT_ENABLED
+		if (b2DistanceSquared(vertices[i], filtered[filteredCount - 1]) > b2_linearSlop * b2_linearSlop)
+		{
+			filtered[filteredCount++] = vertices[i];
+		}
 	}
 
-	m_count = count;
-	m_vertices = (b2Vec2*)b2Alloc(count * sizeof(b2Vec2));
-	memcpy(m_vertices, vertices, m_count * sizeof(b2Vec2));
+	if (filteredCount < 2)
+	{
+		b2Free(filtered);
+		return;
+	}
+
+	m_count = filteredCount;
+	m_vertices = filtered;
 
 	m_hasPrevVertex = false;
 	m_hasNextVertex = false;
