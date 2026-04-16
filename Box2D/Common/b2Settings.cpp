@@ -144,6 +144,7 @@ namespace
 }
 
 float b2Settings::velocityThreshold = b2_velocityThreshold;
+float b2Settings::linearSlop = b2_linearSlop;
 float b2Settings::timeToSleep = b2_timeToSleep;
 int32 b2Settings::maxSubSteps = b2_maxSubSteps;
 float b2Settings::linearSleepTolerance = b2_linearSleepTolerance;

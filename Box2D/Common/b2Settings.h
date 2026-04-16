@@ -276,6 +276,7 @@ class b2Settings
 {
 	public:
 		static float velocityThreshold;
+		static float linearSlop;
 		static float timeToSleep;
 		static int32 maxSubSteps;
 
