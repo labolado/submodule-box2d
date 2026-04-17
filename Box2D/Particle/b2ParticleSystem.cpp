@@ -182,13 +182,14 @@ struct LightweightPair
 	A first;
 	B second;
 
-	// Compares the value of two FixtureParticle objects returning
-	// true if left is a smaller value than right.
+	// Lexicographic comparison: first by 'first', then by 'second'.
+	// Must satisfy strict weak ordering for std::sort (Xcode 26 libc++
+	// enforces this at runtime; the old && version would abort).
 	static bool Compare(const LightweightPair& left,
 						const LightweightPair& right)
 	{
-		return left.first < right.first &&
-			left.second < right.second;
+		if (left.first != right.first) return left.first < right.first;
+		return left.second < right.second;
 	}
 
 };
